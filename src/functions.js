@@ -1,4 +1,5 @@
-import { Parameters } from "./parameters";
+import { Parameters } from "./parameters.js";
+import P5 from 'p5';
 
 let roads = []; // is the global array for road pixels.
 const waters = [];
@@ -22,7 +23,7 @@ let castes = ["Lord", "Farmer", "Merchant"];
 
 //pathFinding related
 var routes = []; //array for all routes
-var routesNr = 0;
+var routesNr = 0; //to count route index in routes array
 var routesFront = []; //array of routefront arrays
 let routeTile = []; //road tiles
 const landWaterChangeModeCost = 100; // high mode change cost
@@ -132,120 +133,7 @@ function farmValue() {
     farmValue();
   }
   
-  class Farmer {
-    constructor() {
-      this.buffer = 1;
-      this.trafficWeight = 1;
-  
-      // the tile with highest 'defense'from terrain is selected as castle position
-      habitable.sort((a, b) => (a.farmerValue < b.farmerValue ? 1 : -1));
-      castlePos = habitable[0];
-      this.i = castlePos.i;
-      this.j = castlePos.j;
-      this.x = this.i * res;
-      this.y = this.j * res;
-      this.R =120 + random(50)
-      this.G=120 + random(50)
-      this.B=50 + random(50)
-      this.color = color(120 + random(50),120 + random(50),50 + random(50))
-      
-      // pathFinding(grid[this.i][this.j], start, this.trafficWeight);
-      // pathFinding(grid[this.i][this.j], end, this.trafficWeight);
-      if(castleTiles[0]){
-        pathFinding(castlePos, castleTiles[0], this.trafficWeight * 2);
-      } else {
-        pathFinding(castlePos, start, this.trafficWeight);
-        pathFinding(castlePos, end, this.trafficWeight);
-      }
-      castlePos.attrition = 500;
-      castlePos.occupied = true;
-      castlePos.occupiedBy = this;
-      habitable = habitable.filter((item) => item !== castlePos);
-      tilesCentralHabitable = tilesCentralHabitable.filter(
-        (item) => item !== castlePos
-      );
-      for (let neighbor of castlePos.neighbors) {
-        neighbor.occupied = true;
-      }
-  
-      this.weight = 1;
-      this.nr = nr; //not necessary
-      this.control = []; //voronoi claimed tiles
-      // the farmer will increase the farmerNr of the tiles in farmerRange
-      for (
-        let u = castlePos.i - farmerRange;
-        u < castlePos.i + farmerRange;
-        u++
-      ) {
-        for (
-          let v = castlePos.j - farmerRange;
-          v < castlePos.j + farmerRange;
-          v++
-        ) {
-          if (u >= 0 && u < cols && v >= 0 && v < rows) {
-            if (
-              dist(castlePos.i, castlePos.j, grid[u][v].i, grid[u][v].j) <=
-              farmerRange
-            ) {
-              grid[u][v].farmerNr++;
-  
-              grid[u][v].security +=
-                5 /
-                dist(grid[u][v].i, grid[u][v].j, castlePos.i, castlePos.j) ** 2;
-            }
-          }
-        }
-      }
-    }
-    makeBuffer() {
-      for (let u = this.i - round(this.buffer); u < this.i + round(this.buffer); u++) {
-        for (let v = this.j - round(this.buffer); v < this.j + round(this.buffer); v++) {
-          if (
-            u >= 0 &&
-            u < cols &&
-            v >= 0 &&
-            v < rows &&
-            dist(this.i, this.j, u, v) < this.buffer
-          ) {
-            grid[u][v].buffer = true;
-            grid[u][v].habitable = false;
-  
-            habitable = habitable.filter((item) => item !== grid[u][v]);
-            tilesCentralHabitable = tilesCentralHabitable.filter(
-              (item) => item !== grid[u][v]
-            );
-          }
-        }
-      }
-    }
-    show() {
-      colorMode(RGB);
-      strokeWeight(0.5);
-      stroke(0);
-      fill(this.R + 120, this.G+110, this.B + 110);
-      
-      
-      push();
-      translate(this.x , this.y );
-      if (grid[this.i][this.j].rotate) {
-        rotate(grid[this.i][this.j].rotate);
-      }
-  
-      rectMode(CENTER);
-      rect(0, 0, res*0.8, res*0.8);
-      rectMode(CORNER);
-      pop();
-      
-      
-    }
-    shadow(){
-      colorMode(RGB);
-      noStroke()
-      fill(30);
-      ellipse(this.x  +2, this.y -2, 1.1 * res, 1.1 * res);
-    }
-    
-  }
+ 
   function merchantPopulate() {
     merchantValue();
     let newCastle = new Merchant();
@@ -254,117 +142,7 @@ function farmValue() {
     newCastle.makeBuffer();
     merchantValue();
   }
-  class Merchant {
-    constructor() {
-      this.buffer = 0;
-      this.trafficWeight = 3;
-      habitable.sort((a, b) => (a.merchantValue < b.merchantValue ? 1 : -1));
-      castlePos = habitable[0];
-      this.i = castlePos.i;
-      this.j = castlePos.j;
-      this.x = this.i * res;
-      this.y = this.j * res;
-      this.color = color(220 + random(70), 130 + random(70), 50 + random(50));
-  
-      pathFinding(grid[this.i][this.j], start, this.trafficWeight);
-      pathFinding(grid[this.i][this.j], end, this.trafficWeight);
-      pathFinding(grid[this.i][this.j], castleTiles[0], this.trafficWeight * 2);
-      castlePos.attrition = 500;
-      castlePos.occupied = true;
-      castlePos.occupiedBy = this;
-      habitable = habitable.filter((item) => item !== castlePos);
-      tilesCentralHabitable = tilesCentralHabitable.filter(
-        (item) => item !== castlePos
-      );
-  
-      for (let neighbor of castlePos.neighbors) {
-        neighbor.occupied = true;
-      }
-  
-      this.weight = 1;
-      this.nr = nr; //not necessary
-      this.control = []; //not clarified
-      // it will increase security value of the tiles in Range(use farmer Range for a while)
-      for (
-        let u = castlePos.i - farmerRange;
-        u < castlePos.i + farmerRange;
-        u++
-      ) {
-        for (
-          let v = castlePos.j - farmerRange;
-          v < castlePos.j + farmerRange;
-          v++
-        ) {
-          if (u >= 0 && u < cols && v >= 0 && v < rows) {
-            if (
-              dist(castlePos.i, castlePos.j, grid[u][v].i, grid[u][v].j) <=
-              farmerRange
-            ) {
-              // grid[u][v].security += 1;
-              grid[u][v].security +=
-                5 /
-                dist(grid[u][v].i, grid[u][v].j, castlePos.i, castlePos.j) ** 2;
-            }
-          }
-        }
-      }
-    }
-    makeBuffer() {
-      for (let u = this.i - this.buffer; u < this.i + this.buffer; u++) {
-        for (let v = this.j - this.buffer; v < this.j + this.buffer; v++) {
-          if (
-            u >= 0 &&
-            u < cols+1 &&
-            v >= 0 &&
-            v < rows+1 &&
-            dist(this.i, this.j, u, v) <= this.buffer
-          ) {
-            grid[u][v].buffer = true;
-            grid[u][v].habitable = false;
-  
-            habitable = habitable.filter((item) => item !== grid[u][v]);
-            tilesCentralHabitable = tilesCentralHabitable.filter(
-              (item) => item !== grid[u][v]
-            );
-          }
-        }
-      }
-    }
-    show() {
-      colorMode(RGB);
-      strokeWeight(0.5);
-      stroke(0);
-      fill(this.color);
-      push();
-      translate(this.x , this.y );
-      if (grid[this.i][this.j].rotate) {
-        rotate(grid[this.i][this.j].rotate);
-      }
-  
-      rectMode(CENTER);
-      rect(0, 0, res*0.6, res*0.8);
-      rectMode(CORNER);
-      pop();
-    }
-    shadow(){
-      colorMode(RGB);
-      noStroke();
-      stroke(0);
-      
-      push();
-      translate(this.x  +2, this.y  -2);
-      if (grid[this.i][this.j].rotate) {
-        rotate(grid[this.i][this.j].rotate);
-      }
-  
-      rectMode(CENTER);
-      fill(30);
-      rect(0, 0, res*0.6, res*0.8);
-      fill(30);
-      rectMode(CORNER);
-      pop();
-    }
-  }
+ 
   function newcomerPopulate() {
     newcomerValue();
     let newCastle = new Newcomer();
@@ -384,16 +162,7 @@ function farmValue() {
   //     })) || null;
   //  }
   
-  //A* path finding algorithm, between two spots
-  class Route {
-    constructor(start, end, trafficWeight) {
-      this.start = start;
-      this.end = end;
-      this.route = [];
-      this.trafficWeight = trafficWeight;
-    }
-    show() {}
-  }
+
   
   function pathFinding(start, end, trafficWeight) {
     //reset grid......
@@ -434,7 +203,7 @@ function farmValue() {
               current.g +
               landWaterChangeModeCost +
               waterAttrition * dist(neighbor.i, neighbor.j, current.i, current.j);
-          } else { //land movement, has flatTerrainCost
+          } else { //land movement, uphill, downhill, has flatTerrainCost as base-cost
             moveCost =
               current.g +
               neighbor.attrition *
@@ -447,7 +216,7 @@ function farmValue() {
                 dist(neighbor.i, neighbor.j, current.i, current.j);
           }
           if (moveCost < neighbor.g) {
-            neighbor.from = current;
+            neighbor.from = current; //from is a temporary property to store the route in process
             neighbor.g = moveCost;
             neighbor.f = neighbor.g + neighbor.h;
           }
@@ -460,26 +229,28 @@ function farmValue() {
     }
   
     if (current == end) {
-      var previous = end;
+      let previous = end;
       while (previous.from != null) {
         route.push(previous);
         previous = previous.from;
-        previous.occupied = true;
+        previous.occupied = true;//openToOccupy
+        previous.openToOccupy = false;
         previous.road = true;
   
         roads.push(previous);
   
-        previous.traffic += trafficWeight; //to highway dest
+        previous.traffic += trafficWeight; //to highway dest, ??has to do with trafficValue??
   
         previous.attrition = round(1 / previous.traffic, 2); //the more the traffic the less the attrition
       }
       route.push(start);
       start.occupied = true;
+      start.openToOccupy = false;
       start.road = true;
       roads.push(start);
   
       //remove the trade route from buildable lots
-      habitable = habitable.filter(function (el) {
+      openToOccupy = openToOccupy.filter(function (el) {
         return !route.includes(el);
       });
       routes.push(route);
@@ -505,7 +276,7 @@ function farmValue() {
           }
         }
       }
-  
+      //draw 
       vertex(route[route.length - 1].x, route[route.length - 1].y);
       endShape();
       for (let step = 0; step < route.length; step++) {

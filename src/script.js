@@ -1,10 +1,17 @@
-import * as THREE from 'three'
+import * as THREE from 'three';
 import { Parameters } from './parameters.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import {mergeVertices} from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 
 import P5 from 'p5'
 import GUI from 'lil-gui';
+import Tile from './tile.js';
+
+import Lord from './lord.js';
+import Farmer from './farmer.js';
+import Merchant from './merchant.js';
+import Route from './route.js';
+
 
 const gui = new GUI();
 gui.add(Parameters, 'camY', 0, 1000, 1)
@@ -40,7 +47,7 @@ scene.fog = new THREE.Fog( 0xa0a0c0, 1000, 5000 );
 
 // Base camera
 const camera = new THREE.PerspectiveCamera(120, sizes.width / sizes.height, 1, 10000)
-camera.position.set(parameters.camX, parameters.camY, parameters.camZ)
+camera.position.set(Parameters.camX, Parameters.camY, Parameters.camZ)
 camera.lookAt(new THREE.Vector3(cols*res/2, -1000, rows*res/2));
 // camera.getWorldDirection(new THREE.Vector3(0, -0.5, -1).normalize())
 scene.add(camera)

@@ -1,3 +1,5 @@
+import P5 from 'p5';
+
 export default class Lord {
     constructor() {
       this.buffer = 2;
